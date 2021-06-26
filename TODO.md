@@ -18,4 +18,6 @@
 ## DEV ENV
 - [x] Typescript Dev Environment
 - [x] Golang Dev Environment
-- [ ] DynamoDB Local
+- [ ] ~~DynamoDB Local~~ 
+
+* Have setup dynamodb locally, could not make `sam` working with local invoke. It may relates to `GoFunction` experimental cdk feature. Instead of zip code, it is bootstraped binary. Will dig more later.

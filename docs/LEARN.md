@@ -5,3 +5,4 @@
 3. HTTP API has less feature than REST API
 4. Cannot use wafv2 to associate cloudfront acl, need pass webacl arn not id cross region to cloudfront stack. (The documentation is incorrect, it says WebACLId but expect ARN value instead Id)
 5. New Bot Control is interesting, but still can be fooled
+6. Made a custom resource with new cdk interface to allow cross region import

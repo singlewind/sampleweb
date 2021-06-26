@@ -2,6 +2,8 @@
 
 ## Table of Content
 
+PS> Put code in `$GOPATH/src/github.com/singlewind/sampleweb` or clone from [repo](https://github.com/singlewind/sampleweb)
+
 - [Develope](docs/DEVELOP.md)
 - [Deploy](docs/DEPLOY.md)
 - [Test](docs/TEST.md)

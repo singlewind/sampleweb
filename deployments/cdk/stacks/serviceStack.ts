@@ -81,5 +81,11 @@ export class ServiceStack extends BaseStack {
       value: cf.cloudfront.distributionId,
       exportName: `${this.stackName}:DistributionID`,
     })
+
+    new cdk.CfnOutput(this, 'DistributionDomainName', {
+      description: 'DistributionDomainName of Cloudfront',
+      value: cf.cloudfront.distributionDomainName,
+      exportName: `${this.stackName}:DistributionDomainName`,
+    })
   }
 }
