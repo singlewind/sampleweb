@@ -72,6 +72,9 @@ export class WafStack extends BaseStack {
         managedRuleGroupStatement: <wafv2.CfnWebACL.ManagedRuleGroupStatementProperty>{
           name: 'AWSManagedRulesBotControlRuleSet',
           vendorName: 'AWS',
+          excludedRules: [{
+            name: 'CategoryMonitoring',
+          }],
         }
       },
       visibilityConfig: <wafv2.CfnWebACL.VisibilityConfigProperty> {

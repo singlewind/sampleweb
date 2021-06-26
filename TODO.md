@@ -10,10 +10,10 @@
 - [x] Dashboard
 
 ## Lambda
-- [ ] Read (GET)
-- [ ] Write (PUT|POST)
-- [ ] Home (GET)
-- [ ] Error (GET)
+- [x] Read (GET)
+- [x] Write (PUT|POST)
+- [x] Home (GET)
+- [x] Error (GET)
 
 ## DEV ENV
 - [x] Typescript Dev Environment

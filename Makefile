@@ -1,5 +1,5 @@
 security:
-	@gosec ./...
+	@gosec --exclude-dir=node_modules ./...
 	@echo "[OK] Go security check was completed!"
 
 .PHONY: clean
