@@ -7,6 +7,8 @@ import { requiredEnv, fromEnv, ifEmtpy } from './lib/utils'
 import { InfraStack, WafStack, ServiceStack } from './stacks'
 
 const environment = requiredEnv('ENVIRONMENT')
+const region = requiredEnv('AWS_REGION')
+const cloudfrontRegion = 'us-east-1'
 
 const configFromEnv = fromEnv({
   application: 'APPLICATION',
@@ -25,22 +27,24 @@ const app = new cdk.App()
 
 const infraStack = new InfraStack(app, `${environment}-custom-resource`, {
   env: {
-    region: 'us-east-1',
+    region,
   },
   ...commonParams,
 })
 
 const wafStack = new WafStack(app, `${environment}-${configFromEnv.application}-waf`, {
   env: {
-    region: 'us-east-1',
+    region: cloudfrontRegion,
   },
   ...commonParams,
   scope: 'CLOUDFRONT',
 })
 
 const serviceStack = new ServiceStack(app, `${environment}-${configFromEnv.application}-service`, {
+  env: {
+    region,
+  },
   ...commonParams,
-  crossImportFuncArnExportName: `${infraStack.stackName}:CrossImportFuncArn`,
   dynamoDB: {
     readMaxRCU: 500,
     writeMaxRCU: 1000,
@@ -50,8 +54,14 @@ const serviceStack = new ServiceStack(app, `${environment}-${configFromEnv.appli
   gateway: {
     throttlingBurstLimit: 500,
     throttlingRateLimit: 1000,
+  },
+  crossImportFuncArnExportName: `${infraStack.stackName}:CrossImportFuncArn`,
+  webAclImport: {
+    region: cloudfrontRegion,
+    stackName: wafStack.stackName,
+    outputKey: 'WebAclArn',
   }
 })
 
-wafStack.addDependency(serviceStack, 'Cloudfront DistributionId')
-wafStack.addDependency(infraStack, 'Cross import function')
+serviceStack.addDependency(wafStack, 'WebAcl Arn')
+serviceStack.addDependency(infraStack, 'Cross import function')

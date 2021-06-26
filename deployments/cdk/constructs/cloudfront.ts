@@ -8,6 +8,7 @@ import * as origins from '@aws-cdk/aws-cloudfront-origins'
 export interface ICloudfrontProps {
   gateway: api.HttpApi
   stage: string
+  webAclArn: string
 }
 
 export class Cloudfront extends cdk.Construct {
@@ -58,6 +59,7 @@ export class Cloudfront extends cdk.Construct {
       },
       enableLogging: true,
       logBucket: loggingBucket,
+      webAclId: props.webAclArn,
     })
   }
 }

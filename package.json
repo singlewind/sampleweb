@@ -6,11 +6,13 @@
     "doc": "docs"
   },
   "scripts": {
+    "cdk:bootstrap": "cdk bootstrap",
     "cdk:synth": "cdk synth",
     "cdk:destroy": "cdk destroy",
+    "cdk:deploy": "cdk deploy --all --require-approval never",
     "lint": "eslint . --ext .ts",
     "synth": "npm-run-all lint cdk:synth",
-    "deploy": "cdk deploy" 
+    "deploy": "npm-run-all cdk:bootstrap cdk:deploy" 
   },
   "repository": {
     "type": "git",

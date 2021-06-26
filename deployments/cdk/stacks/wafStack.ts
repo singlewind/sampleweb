@@ -110,6 +110,12 @@ export class WafStack extends BaseStack {
       exportName: `${this.stackName}:WebACLID`,
     })
 
+    new cdk.CfnOutput(this, 'WebAclArn', {
+      description: `WebAclArn of ${webAclName}`,
+      value: webacl.attrArn,
+      exportName: `${this.stackName}:WebAclArn`,
+    })
+
     new cdk.CfnOutput(this, 'WebAclMetricName', {
       description: `Metric name of ${webAclName}`,
       value: webAclMetricName,
