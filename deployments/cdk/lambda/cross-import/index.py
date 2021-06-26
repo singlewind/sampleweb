@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 def handler(event, context):
-  print(json.dumps(event))
   logger.info(json.dumps(event))
   request_type = event.get("RequestType")
   if request_type == "Delete":
@@ -44,7 +43,6 @@ def on_update(event, context):
       StackName=stack_name,
     )['Stacks'][0]['Outputs']
 
-    print(json.dumps(outputs))
     logger.info(json.dumps(outputs))
 
     output_value = [o for o in outputs if o['OutputKey'] == output_key][0]['OutputValue']

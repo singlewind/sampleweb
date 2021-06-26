@@ -24,6 +24,9 @@ const commonParams = {
 const app = new cdk.App()
 
 const infraStack = new InfraStack(app, `${environment}-custom-resource`, {
+  env: {
+    region: 'us-east-1',
+  },
   ...commonParams,
 })
 
@@ -38,18 +41,17 @@ const wafStack = new WafStack(app, `${environment}-${configFromEnv.application}-
 const serviceStack = new ServiceStack(app, `${environment}-${configFromEnv.application}-service`, {
   ...commonParams,
   crossImportFuncArnExportName: `${infraStack.stackName}:CrossImportFuncArn`,
-  waf: {
-    stackName: wafStack.stackName,
-    outputKey: 'WebAclID',
-    region: wafStack.region,
-  },
   dynamoDB: {
     readMaxRCU: 500,
     writeMaxRCU: 1000,
     readMinRCU: 1,
     writeMinRCU: 1,
+  },
+  gateway: {
+    throttlingBurstLimit: 500,
+    throttlingRateLimit: 1000,
   }
 })
 
-serviceStack.addDependency(wafStack, 'WafAcl need ready')
-serviceStack.addDependency(infraStack, 'Cross import function')
+wafStack.addDependency(serviceStack, 'Cloudfront DistributionId')
+wafStack.addDependency(infraStack, 'Cross import function')

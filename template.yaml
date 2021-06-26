@@ -1,0 +1,1316 @@
+Resources:
+  ImportsWafAclResource9CE8DFC5:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken:
+        Fn::ImportValue: dev-custom-resource:CrossImportFuncArn
+      StackName: dev-sampleweb-waf
+      Region: us-east-1
+      OutputKey: WebAclID
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Imports/WafAclResource/Default
+  DynamoDB25F6E66C:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      KeySchema:
+        - AttributeName: Title
+          KeyType: HASH
+        - AttributeName: Year
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: Title
+          AttributeType: S
+        - AttributeName: Year
+          AttributeType: "N"
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: dev-sampleweb
+      Tags:
+        - Key: Application
+          Value: sampleweb
+        - Key: CreatedBy
+          Value: Yue Zhou
+        - Key: Environment
+          Value: dev
+        - Key: Version
+          Value: 1.0.0
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/DynamoDB/Resource
+  DynamoDBReadScalingTarget16B650BC:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 500
+      MinCapacity: 1
+      ResourceId:
+        Fn::Join:
+          - ""
+          - - table/
+            - Ref: DynamoDB25F6E66C
+      RoleARN:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":iam::"
+            - Ref: AWS::AccountId
+            - :role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_DynamoDBTable
+      ScalableDimension: dynamodb:table:ReadCapacityUnits
+      ServiceNamespace: dynamodb
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/DynamoDB/ReadScaling/Target/Resource
+  DynamoDBReadScalingTargetTrackingC6886B85:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: devsamplewebserviceDynamoDBReadScalingTargetTracking756B059E
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId:
+        Ref: DynamoDBReadScalingTarget16B650BC
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBReadCapacityUtilization
+        TargetValue: 50
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/DynamoDB/ReadScaling/Target/Tracking/Resource
+  DynamoDBWriteScalingTarget603E6815:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 1000
+      MinCapacity: 1
+      ResourceId:
+        Fn::Join:
+          - ""
+          - - table/
+            - Ref: DynamoDB25F6E66C
+      RoleARN:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":iam::"
+            - Ref: AWS::AccountId
+            - :role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_DynamoDBTable
+      ScalableDimension: dynamodb:table:WriteCapacityUnits
+      ServiceNamespace: dynamodb
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/DynamoDB/WriteScaling/Target/Resource
+  DynamoDBWriteScalingTargetTracking69CA8D85:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: devsamplewebserviceDynamoDBWriteScalingTargetTrackingC5EF01F9
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId:
+        Ref: DynamoDBWriteScalingTarget603E6815
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBWriteCapacityUtilization
+        TargetValue: 50
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/DynamoDB/WriteScaling/Target/Tracking/Resource
+  Gateway43CB3636:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      CorsConfiguration:
+        AllowCredentials: true
+        AllowHeaders:
+          - Content-Type
+          - X-Amz-Date
+          - Authorization
+          - X-Api-Key
+        AllowMethods:
+          - OPTIONS
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+      DisableExecuteApiEndpoint: false
+      Name: dev-sampleweb
+      ProtocolType: HTTP
+      Tags:
+        Application: sampleweb
+        CreatedBy: Yue Zhou
+        Environment: dev
+        Version: 1.0.0
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/Resource
+  GatewayGETerrordevsamplewebserviceGatewayGETerror760F099EPermission5C8D2F94:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - LambdasErrorFunction5B5F6A0C
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: Gateway43CB3636
+            - /*/*/error
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/GET--error/devsamplewebserviceGatewayGETerror760F099E-Permission
+  GatewayGETerrorHttpIntegrationdd5176f801e725f3f5faacda9e50227fEA535985:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::GetAtt:
+          - LambdasErrorFunction5B5F6A0C
+          - Arn
+      PayloadFormatVersion: "2.0"
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/GET--error/HttpIntegration-dd5176f801e725f3f5faacda9e50227f/Resource
+  GatewayGETerror32A5DC74:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      RouteKey: GET /error
+      AuthorizationType: NONE
+      Target:
+        Fn::Join:
+          - ""
+          - - integrations/
+            - Ref: GatewayGETerrorHttpIntegrationdd5176f801e725f3f5faacda9e50227fEA535985
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/GET--error/Resource
+  GatewayHEADerrordevsamplewebserviceGatewayHEADerrorF487A3DBPermissionEEAA0BDC:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - LambdasErrorFunction5B5F6A0C
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: Gateway43CB3636
+            - /*/*/error
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/HEAD--error/devsamplewebserviceGatewayHEADerrorF487A3DB-Permission
+  GatewayHEADerror2A26011F:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      RouteKey: HEAD /error
+      AuthorizationType: NONE
+      Target:
+        Fn::Join:
+          - ""
+          - - integrations/
+            - Ref: GatewayGETerrorHttpIntegrationdd5176f801e725f3f5faacda9e50227fEA535985
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/HEAD--error/Resource
+  GatewayOPTIONSerrordevsamplewebserviceGatewayOPTIONSerrorDEFAF53EPermission6B94E14B:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - LambdasErrorFunction5B5F6A0C
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: Gateway43CB3636
+            - /*/*/error
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/OPTIONS--error/devsamplewebserviceGatewayOPTIONSerrorDEFAF53E-Permission
+  GatewayOPTIONSerror79C780DC:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      RouteKey: OPTIONS /error
+      AuthorizationType: NONE
+      Target:
+        Fn::Join:
+          - ""
+          - - integrations/
+            - Ref: GatewayGETerrorHttpIntegrationdd5176f801e725f3f5faacda9e50227fEA535985
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/OPTIONS--error/Resource
+  GatewayGETdevsamplewebserviceGatewayGET8247BDDDPermissionB0550882:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - LambdasHomeFunction3A122D52
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: Gateway43CB3636
+            - /*/*/
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/GET--/devsamplewebserviceGatewayGET8247BDDD-Permission
+  GatewayGETHttpIntegration0d373c6cca87005eb9eca966cc5f402b7D915D5E:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::GetAtt:
+          - LambdasHomeFunction3A122D52
+          - Arn
+      PayloadFormatVersion: "2.0"
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/GET--/HttpIntegration-0d373c6cca87005eb9eca966cc5f402b/Resource
+  GatewayGET0E3589CE:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      RouteKey: GET /
+      AuthorizationType: NONE
+      Target:
+        Fn::Join:
+          - ""
+          - - integrations/
+            - Ref: GatewayGETHttpIntegration0d373c6cca87005eb9eca966cc5f402b7D915D5E
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/GET--/Resource
+  GatewayHEADdevsamplewebserviceGatewayHEADB1433394PermissionC5668A4C:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - LambdasHomeFunction3A122D52
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: Gateway43CB3636
+            - /*/*/
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/HEAD--/devsamplewebserviceGatewayHEADB1433394-Permission
+  GatewayHEAD8A2A3AE4:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      RouteKey: HEAD /
+      AuthorizationType: NONE
+      Target:
+        Fn::Join:
+          - ""
+          - - integrations/
+            - Ref: GatewayGETHttpIntegration0d373c6cca87005eb9eca966cc5f402b7D915D5E
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/HEAD--/Resource
+  GatewayOPTIONSdevsamplewebserviceGatewayOPTIONS7AE50F9APermission8833D327:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - LambdasHomeFunction3A122D52
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: Gateway43CB3636
+            - /*/*/
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/OPTIONS--/devsamplewebserviceGatewayOPTIONS7AE50F9A-Permission
+  GatewayOPTIONS5C5496B0:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      RouteKey: OPTIONS /
+      AuthorizationType: NONE
+      Target:
+        Fn::Join:
+          - ""
+          - - integrations/
+            - Ref: GatewayGETHttpIntegration0d373c6cca87005eb9eca966cc5f402b7D915D5E
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/OPTIONS--/Resource
+  GatewayGETshowdevsamplewebserviceGatewayGETshowAE54B6C5PermissionDB6019E1:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - LambdasShowFunction1C1B08E9
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: Gateway43CB3636
+            - /*/*/show
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/GET--show/devsamplewebserviceGatewayGETshowAE54B6C5-Permission
+  GatewayGETshowHttpIntegration5872f2cd62e65974fbbd5831a140ffd6AEF25C48:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::GetAtt:
+          - LambdasShowFunction1C1B08E9
+          - Arn
+      PayloadFormatVersion: "2.0"
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/GET--show/HttpIntegration-5872f2cd62e65974fbbd5831a140ffd6/Resource
+  GatewayGETshow32CFECC1:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      RouteKey: GET /show
+      AuthorizationType: NONE
+      Target:
+        Fn::Join:
+          - ""
+          - - integrations/
+            - Ref: GatewayGETshowHttpIntegration5872f2cd62e65974fbbd5831a140ffd6AEF25C48
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/GET--show/Resource
+  GatewayHEADshowdevsamplewebserviceGatewayHEADshowA7C8C8DCPermission6BE3C33D:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - LambdasShowFunction1C1B08E9
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: Gateway43CB3636
+            - /*/*/show
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/HEAD--show/devsamplewebserviceGatewayHEADshowA7C8C8DC-Permission
+  GatewayHEADshow86AAF7BF:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      RouteKey: HEAD /show
+      AuthorizationType: NONE
+      Target:
+        Fn::Join:
+          - ""
+          - - integrations/
+            - Ref: GatewayGETshowHttpIntegration5872f2cd62e65974fbbd5831a140ffd6AEF25C48
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/HEAD--show/Resource
+  GatewayOPTIONSshowdevsamplewebserviceGatewayOPTIONSshow0C1F4B30PermissionBE9A5FF1:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - LambdasShowFunction1C1B08E9
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: Gateway43CB3636
+            - /*/*/show
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/OPTIONS--show/devsamplewebserviceGatewayOPTIONSshow0C1F4B30-Permission
+  GatewayOPTIONSshowFA53F37B:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      RouteKey: OPTIONS /show
+      AuthorizationType: NONE
+      Target:
+        Fn::Join:
+          - ""
+          - - integrations/
+            - Ref: GatewayGETshowHttpIntegration5872f2cd62e65974fbbd5831a140ffd6AEF25C48
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/OPTIONS--show/Resource
+  GatewayPOSTupsertdevsamplewebserviceGatewayPOSTupsertC5DDE6FBPermissionB2F23548:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - LambdasUpsertFunction76CA27F1
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: Gateway43CB3636
+            - /*/*/upsert
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/POST--upsert/devsamplewebserviceGatewayPOSTupsertC5DDE6FB-Permission
+  GatewayPOSTupsertHttpIntegration42827846aa87a6bbc61af3f79e9de10318DB7237:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::GetAtt:
+          - LambdasUpsertFunction76CA27F1
+          - Arn
+      PayloadFormatVersion: "2.0"
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/POST--upsert/HttpIntegration-42827846aa87a6bbc61af3f79e9de103/Resource
+  GatewayPOSTupsertD1FA3434:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      RouteKey: POST /upsert
+      AuthorizationType: NONE
+      Target:
+        Fn::Join:
+          - ""
+          - - integrations/
+            - Ref: GatewayPOSTupsertHttpIntegration42827846aa87a6bbc61af3f79e9de10318DB7237
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/POST--upsert/Resource
+  GatewayPUTupsertdevsamplewebserviceGatewayPUTupsert35F4AD5BPermission093E068D:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - LambdasUpsertFunction76CA27F1
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: Gateway43CB3636
+            - /*/*/upsert
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/PUT--upsert/devsamplewebserviceGatewayPUTupsert35F4AD5B-Permission
+  GatewayPUTupsertE370A55D:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      RouteKey: PUT /upsert
+      AuthorizationType: NONE
+      Target:
+        Fn::Join:
+          - ""
+          - - integrations/
+            - Ref: GatewayPOSTupsertHttpIntegration42827846aa87a6bbc61af3f79e9de10318DB7237
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/PUT--upsert/Resource
+  GatewayPATCHupsertdevsamplewebserviceGatewayPATCHupsert978F089CPermission3E451501:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - LambdasUpsertFunction76CA27F1
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: Gateway43CB3636
+            - /*/*/upsert
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/PATCH--upsert/devsamplewebserviceGatewayPATCHupsert978F089C-Permission
+  GatewayPATCHupsertBFC62AEA:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      RouteKey: PATCH /upsert
+      AuthorizationType: NONE
+      Target:
+        Fn::Join:
+          - ""
+          - - integrations/
+            - Ref: GatewayPOSTupsertHttpIntegration42827846aa87a6bbc61af3f79e9de10318DB7237
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/PATCH--upsert/Resource
+  GatewayHEADupsertdevsamplewebserviceGatewayHEADupsert82598A23PermissionC9B0FD38:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - LambdasUpsertFunction76CA27F1
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: Gateway43CB3636
+            - /*/*/upsert
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/HEAD--upsert/devsamplewebserviceGatewayHEADupsert82598A23-Permission
+  GatewayHEADupsert24D1F86D:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      RouteKey: HEAD /upsert
+      AuthorizationType: NONE
+      Target:
+        Fn::Join:
+          - ""
+          - - integrations/
+            - Ref: GatewayPOSTupsertHttpIntegration42827846aa87a6bbc61af3f79e9de10318DB7237
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/HEAD--upsert/Resource
+  GatewayOPTIONSupsertdevsamplewebserviceGatewayOPTIONSupsert8BE31FC0Permission910D69C2:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - LambdasUpsertFunction76CA27F1
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: Gateway43CB3636
+            - /*/*/upsert
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/OPTIONS--upsert/devsamplewebserviceGatewayOPTIONSupsert8BE31FC0-Permission
+  GatewayOPTIONSupsertA6FAE4FF:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      RouteKey: OPTIONS /upsert
+      AuthorizationType: NONE
+      Target:
+        Fn::Join:
+          - ""
+          - - integrations/
+            - Ref: GatewayPOSTupsertHttpIntegration42827846aa87a6bbc61af3f79e9de10318DB7237
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Gateway/OPTIONS--upsert/Resource
+  GatewayStageCC6389D6:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId:
+        Ref: Gateway43CB3636
+      StageName: dev
+      AccessLogSettings:
+        DestinationArn:
+          Fn::GetAtt:
+            - AccessLogGroupEC82D238
+            - Arn
+        Format: '{"id":"$context.requestId","path":"$context.path","protocol":"$context.protocol","method":"$context.httpMethod","time":"$context.requestTime","ip":"$context.identity.sourceIp","agent":"$context.identity.userAgent","latency":"$context.integration.latency"}'
+      AutoDeploy: true
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 500
+        ThrottlingRateLimit: 1000
+      Tags:
+        Application: sampleweb
+        CreatedBy: Yue Zhou
+        Environment: dev
+        Version: 1.0.0
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/GatewayStage/Resource
+  AccessLogGroupEC82D238:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 7
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/AccessLogGroup/Resource
+  LambdasErrorFunctionServiceRole14D851B6:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Tags:
+        - Key: Application
+          Value: sampleweb
+        - Key: CreatedBy
+          Value: Yue Zhou
+        - Key: Environment
+          Value: dev
+        - Key: Name
+          Value: dev-sampleweb-service-error
+        - Key: Version
+          Value: 1.0.0
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Lambdas/ErrorFunction/ServiceRole/Resource
+  LambdasErrorFunction5B5F6A0C:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Ref: AssetParameters29b89499f48db5b37fc18e9ff63b6aa6a241b040c119b66cd389dd836660d9cdS3Bucket61D62850
+        S3Key:
+          Fn::Join:
+            - ""
+            - - Fn::Select:
+                  - 0
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters29b89499f48db5b37fc18e9ff63b6aa6a241b040c119b66cd389dd836660d9cdS3VersionKeyC5D5E716
+              - Fn::Select:
+                  - 1
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters29b89499f48db5b37fc18e9ff63b6aa6a241b040c119b66cd389dd836660d9cdS3VersionKeyC5D5E716
+      Role:
+        Fn::GetAtt:
+          - LambdasErrorFunctionServiceRole14D851B6
+          - Arn
+      Handler: bootstrap
+      Runtime: provided.al2
+      Tags:
+        - Key: Application
+          Value: sampleweb
+        - Key: CreatedBy
+          Value: Yue Zhou
+        - Key: Environment
+          Value: dev
+        - Key: Name
+          Value: dev-sampleweb-service-error
+        - Key: Version
+          Value: 1.0.0
+    DependsOn:
+      - LambdasErrorFunctionServiceRole14D851B6
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Lambdas/ErrorFunction/Resource
+      aws:asset:path: asset.29b89499f48db5b37fc18e9ff63b6aa6a241b040c119b66cd389dd836660d9cd
+      aws:asset:property: Code
+  LambdasHomeFunctionServiceRole2518E7AF:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Tags:
+        - Key: Application
+          Value: sampleweb
+        - Key: CreatedBy
+          Value: Yue Zhou
+        - Key: Environment
+          Value: dev
+        - Key: Name
+          Value: dev-sampleweb-service-home
+        - Key: Version
+          Value: 1.0.0
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Lambdas/HomeFunction/ServiceRole/Resource
+  LambdasHomeFunction3A122D52:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Ref: AssetParameters1d2faa70ee7d18b73f23ed431a786dec0bd5ceb72ac8089a663fbb4efab0ec09S3BucketF22CCC6B
+        S3Key:
+          Fn::Join:
+            - ""
+            - - Fn::Select:
+                  - 0
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters1d2faa70ee7d18b73f23ed431a786dec0bd5ceb72ac8089a663fbb4efab0ec09S3VersionKey43DC86C1
+              - Fn::Select:
+                  - 1
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters1d2faa70ee7d18b73f23ed431a786dec0bd5ceb72ac8089a663fbb4efab0ec09S3VersionKey43DC86C1
+      Role:
+        Fn::GetAtt:
+          - LambdasHomeFunctionServiceRole2518E7AF
+          - Arn
+      Handler: bootstrap
+      Runtime: provided.al2
+      Tags:
+        - Key: Application
+          Value: sampleweb
+        - Key: CreatedBy
+          Value: Yue Zhou
+        - Key: Environment
+          Value: dev
+        - Key: Name
+          Value: dev-sampleweb-service-home
+        - Key: Version
+          Value: 1.0.0
+    DependsOn:
+      - LambdasHomeFunctionServiceRole2518E7AF
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Lambdas/HomeFunction/Resource
+      aws:asset:path: asset.1d2faa70ee7d18b73f23ed431a786dec0bd5ceb72ac8089a663fbb4efab0ec09
+      aws:asset:property: Code
+  LambdasShowFunctionServiceRole9D492E00:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Tags:
+        - Key: Application
+          Value: sampleweb
+        - Key: CreatedBy
+          Value: Yue Zhou
+        - Key: Environment
+          Value: dev
+        - Key: Name
+          Value: dev-sampleweb-service-show
+        - Key: Version
+          Value: 1.0.0
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Lambdas/ShowFunction/ServiceRole/Resource
+  LambdasShowFunctionServiceRoleDefaultPolicyFA4DFF51:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action: dynamodb:GetItem
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - DynamoDB25F6E66C
+                  - Arn
+              - Ref: AWS::NoValue
+        Version: "2012-10-17"
+      PolicyName: LambdasShowFunctionServiceRoleDefaultPolicyFA4DFF51
+      Roles:
+        - Ref: LambdasShowFunctionServiceRole9D492E00
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Lambdas/ShowFunction/ServiceRole/DefaultPolicy/Resource
+  LambdasShowFunction1C1B08E9:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Ref: AssetParametersa2494009465d421c82dae9509beb73578d783fcb71afc88f693a2aa9c9e2d35cS3Bucket21193D40
+        S3Key:
+          Fn::Join:
+            - ""
+            - - Fn::Select:
+                  - 0
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParametersa2494009465d421c82dae9509beb73578d783fcb71afc88f693a2aa9c9e2d35cS3VersionKey8829799C
+              - Fn::Select:
+                  - 1
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParametersa2494009465d421c82dae9509beb73578d783fcb71afc88f693a2aa9c9e2d35cS3VersionKey8829799C
+      Role:
+        Fn::GetAtt:
+          - LambdasShowFunctionServiceRole9D492E00
+          - Arn
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: DynamoDB25F6E66C
+      Handler: bootstrap
+      Runtime: provided.al2
+      Tags:
+        - Key: Application
+          Value: sampleweb
+        - Key: CreatedBy
+          Value: Yue Zhou
+        - Key: Environment
+          Value: dev
+        - Key: Name
+          Value: dev-sampleweb-service-show
+        - Key: Version
+          Value: 1.0.0
+    DependsOn:
+      - LambdasShowFunctionServiceRoleDefaultPolicyFA4DFF51
+      - LambdasShowFunctionServiceRole9D492E00
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Lambdas/ShowFunction/Resource
+      aws:asset:path: asset.a2494009465d421c82dae9509beb73578d783fcb71afc88f693a2aa9c9e2d35c
+      aws:asset:property: Code
+  LambdasUpsertFunctionServiceRoleA1E7E4FB:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Tags:
+        - Key: Application
+          Value: sampleweb
+        - Key: CreatedBy
+          Value: Yue Zhou
+        - Key: Environment
+          Value: dev
+        - Key: Name
+          Value: dev-sampleweb-service-upsert
+        - Key: Version
+          Value: 1.0.0
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Lambdas/UpsertFunction/ServiceRole/Resource
+  LambdasUpsertFunctionServiceRoleDefaultPolicy347696F6:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - DynamoDB25F6E66C
+                  - Arn
+              - Ref: AWS::NoValue
+        Version: "2012-10-17"
+      PolicyName: LambdasUpsertFunctionServiceRoleDefaultPolicy347696F6
+      Roles:
+        - Ref: LambdasUpsertFunctionServiceRoleA1E7E4FB
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Lambdas/UpsertFunction/ServiceRole/DefaultPolicy/Resource
+  LambdasUpsertFunction76CA27F1:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Ref: AssetParameters2f44cb44e8e819fd0d7dcdfd23de8c242a7de17f4f26cfb8df4d0a13509db6eaS3Bucket14F476AB
+        S3Key:
+          Fn::Join:
+            - ""
+            - - Fn::Select:
+                  - 0
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters2f44cb44e8e819fd0d7dcdfd23de8c242a7de17f4f26cfb8df4d0a13509db6eaS3VersionKey06C5E9D9
+              - Fn::Select:
+                  - 1
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters2f44cb44e8e819fd0d7dcdfd23de8c242a7de17f4f26cfb8df4d0a13509db6eaS3VersionKey06C5E9D9
+      Role:
+        Fn::GetAtt:
+          - LambdasUpsertFunctionServiceRoleA1E7E4FB
+          - Arn
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: DynamoDB25F6E66C
+      Handler: bootstrap
+      Runtime: provided.al2
+      Tags:
+        - Key: Application
+          Value: sampleweb
+        - Key: CreatedBy
+          Value: Yue Zhou
+        - Key: Environment
+          Value: dev
+        - Key: Name
+          Value: dev-sampleweb-service-upsert
+        - Key: Version
+          Value: 1.0.0
+    DependsOn:
+      - LambdasUpsertFunctionServiceRoleDefaultPolicy347696F6
+      - LambdasUpsertFunctionServiceRoleA1E7E4FB
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Lambdas/UpsertFunction/Resource
+      aws:asset:path: asset.2f44cb44e8e819fd0d7dcdfd23de8c242a7de17f4f26cfb8df4d0a13509db6ea
+      aws:asset:property: Code
+  CloudfrontBucket6A3777FD:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: LogDeliveryWrite
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Application
+          Value: sampleweb
+        - Key: CreatedBy
+          Value: Yue Zhou
+        - Key: Environment
+          Value: dev
+        - Key: Version
+          Value: 1.0.0
+      VersioningConfiguration:
+        Status: Enabled
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Cloudfront/Bucket/Resource
+  CloudfrontBucketPolicy5F3582E1:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: CloudfrontBucket6A3777FD
+      PolicyDocument:
+        Statement:
+          - Action: "*"
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+            Effect: Deny
+            Principal: "*"
+            Resource:
+              Fn::Join:
+                - ""
+                - - Fn::GetAtt:
+                      - CloudfrontBucket6A3777FD
+                      - Arn
+                  - /*
+            Sid: HttpsOnly
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Cloudfront/BucketPolicy/Resource
+  CloudfrontAC19FADF:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+            - PUT
+            - PATCH
+            - POST
+            - DELETE
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          Compress: true
+          TargetOriginId: devsamplewebserviceCloudfrontOrigin10EF6F104
+          ViewerProtocolPolicy: redirect-to-https
+        Enabled: true
+        HttpVersion: http2
+        IPV6Enabled: true
+        Logging:
+          Bucket:
+            Fn::GetAtt:
+              - CloudfrontBucket6A3777FD
+              - RegionalDomainName
+        Origins:
+          - CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1.2
+            DomainName:
+              Fn::Select:
+                - 0
+                - Fn::Split:
+                    - /
+                    - Fn::Select:
+                        - 1
+                        - Fn::Split:
+                            - ://
+                            - Fn::GetAtt:
+                                - Gateway43CB3636
+                                - ApiEndpoint
+            Id: devsamplewebserviceCloudfrontOrigin10EF6F104
+            OriginPath: /dev
+        WebACLId:
+          Fn::GetAtt:
+            - ImportsWafAclResource9CE8DFC5
+            - OutputValue
+      Tags:
+        - Key: Application
+          Value: sampleweb
+        - Key: CreatedBy
+          Value: Yue Zhou
+        - Key: Environment
+          Value: dev
+        - Key: Version
+          Value: 1.0.0
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/Cloudfront/Cloudfront/Resource
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Analytics: v2:deflate64:H4sIAAAAAAAAE11R0W7CMAz8Ft5DoNu05zGmsUmThgo/YNJQBdq4ShwQivrvi1MKaE++sy+2cy5kUczlfPIGZz9V1XEWFTot44ZAHcUSrScXFIll8IRtqT0Gp7RY7u0N38DCe03pYW1szYo1OGg1acfkN1AXiFFqWhkyaHvBQ2MD7a4CGT+DVZx+B58HrLVrjfcpw2ys9qK6WGix2sm4hV2TpRmkdl3XGAUsg0DoFTRpFRm54yYRVi2InNkF0mLMbMHVOm/2LzOErUtOpDabodsa04jLqL4leLipgfQZLqcnGb+IukVnWMeBaYk8ldG3JV27vCcL/tG7jr3M/8ugFw3WXsYfrFcOQ8eFEadadnFao1zh6JUw0MpY4mBSjvf1x7398xT4cF7m+yWeDAvqqCkfYoD84IqGcO/zyHuhGgzV3qElGT+MH7y+fuyR930vLFZaHvzsVLzI4lUWk4M3ZuqCJdNqWQ7xD/TkXyihAgAA
+    Metadata:
+      aws:cdk:path: dev-sampleweb-service/CDKMetadata/Default
+    Condition: CDKMetadataAvailable
+Parameters:
+  AssetParameters29b89499f48db5b37fc18e9ff63b6aa6a241b040c119b66cd389dd836660d9cdS3Bucket61D62850:
+    Type: String
+    Description: S3 bucket for asset "29b89499f48db5b37fc18e9ff63b6aa6a241b040c119b66cd389dd836660d9cd"
+  AssetParameters29b89499f48db5b37fc18e9ff63b6aa6a241b040c119b66cd389dd836660d9cdS3VersionKeyC5D5E716:
+    Type: String
+    Description: S3 key for asset version "29b89499f48db5b37fc18e9ff63b6aa6a241b040c119b66cd389dd836660d9cd"
+  AssetParameters29b89499f48db5b37fc18e9ff63b6aa6a241b040c119b66cd389dd836660d9cdArtifactHashEA2E4A4A:
+    Type: String
+    Description: Artifact hash for asset "29b89499f48db5b37fc18e9ff63b6aa6a241b040c119b66cd389dd836660d9cd"
+  AssetParameters1d2faa70ee7d18b73f23ed431a786dec0bd5ceb72ac8089a663fbb4efab0ec09S3BucketF22CCC6B:
+    Type: String
+    Description: S3 bucket for asset "1d2faa70ee7d18b73f23ed431a786dec0bd5ceb72ac8089a663fbb4efab0ec09"
+  AssetParameters1d2faa70ee7d18b73f23ed431a786dec0bd5ceb72ac8089a663fbb4efab0ec09S3VersionKey43DC86C1:
+    Type: String
+    Description: S3 key for asset version "1d2faa70ee7d18b73f23ed431a786dec0bd5ceb72ac8089a663fbb4efab0ec09"
+  AssetParameters1d2faa70ee7d18b73f23ed431a786dec0bd5ceb72ac8089a663fbb4efab0ec09ArtifactHash712828E4:
+    Type: String
+    Description: Artifact hash for asset "1d2faa70ee7d18b73f23ed431a786dec0bd5ceb72ac8089a663fbb4efab0ec09"
+  AssetParametersa2494009465d421c82dae9509beb73578d783fcb71afc88f693a2aa9c9e2d35cS3Bucket21193D40:
+    Type: String
+    Description: S3 bucket for asset "a2494009465d421c82dae9509beb73578d783fcb71afc88f693a2aa9c9e2d35c"
+  AssetParametersa2494009465d421c82dae9509beb73578d783fcb71afc88f693a2aa9c9e2d35cS3VersionKey8829799C:
+    Type: String
+    Description: S3 key for asset version "a2494009465d421c82dae9509beb73578d783fcb71afc88f693a2aa9c9e2d35c"
+  AssetParametersa2494009465d421c82dae9509beb73578d783fcb71afc88f693a2aa9c9e2d35cArtifactHash13A29E19:
+    Type: String
+    Description: Artifact hash for asset "a2494009465d421c82dae9509beb73578d783fcb71afc88f693a2aa9c9e2d35c"
+  AssetParameters2f44cb44e8e819fd0d7dcdfd23de8c242a7de17f4f26cfb8df4d0a13509db6eaS3Bucket14F476AB:
+    Type: String
+    Description: S3 bucket for asset "2f44cb44e8e819fd0d7dcdfd23de8c242a7de17f4f26cfb8df4d0a13509db6ea"
+  AssetParameters2f44cb44e8e819fd0d7dcdfd23de8c242a7de17f4f26cfb8df4d0a13509db6eaS3VersionKey06C5E9D9:
+    Type: String
+    Description: S3 key for asset version "2f44cb44e8e819fd0d7dcdfd23de8c242a7de17f4f26cfb8df4d0a13509db6ea"
+  AssetParameters2f44cb44e8e819fd0d7dcdfd23de8c242a7de17f4f26cfb8df4d0a13509db6eaArtifactHash08DBC842:
+    Type: String
+    Description: Artifact hash for asset "2f44cb44e8e819fd0d7dcdfd23de8c242a7de17f4f26cfb8df4d0a13509db6ea"
+Outputs:
+  CloudfrontEndpoint2DC306F3:
+    Description:
+      Fn::Join:
+        - ""
+        - - "Endpoint of "
+          - Ref: CloudfrontAC19FADF
+    Value:
+      Fn::GetAtt:
+        - CloudfrontAC19FADF
+        - DomainName
+    Export:
+      Name: dev-sampleweb-service:Endpoint
+Conditions:
+  CDKMetadataAvailable:
+    Fn::Or:
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - af-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ca-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-northwest-1
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-3
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - me-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - sa-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-2
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-west-2
+

@@ -2,12 +2,12 @@
 
 ## CDK
 - [x] DynamoDB
-- [ ] API Gateway
-- [ ] CloudFront
+- [x] API Gateway
+- [x] CloudFront
 - [x] WAF
-- [ ] Lambda
-- [ ] Alarm
-- [ ] Dashboard
+- [x] Lambda
+- [x] Alarm
+- [x] Dashboard
 
 ## Lambda
 - [ ] Read (GET)
