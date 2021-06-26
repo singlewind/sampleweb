@@ -32,6 +32,11 @@
   "homepage": "https://github.com/singlewind/sampleweb#readme",
   "devDependencies": {
     "@aws-cdk/assert": "1.110.0",
+    "@aws-cdk/aws-iam": "1.110.0",
+    "@aws-cdk/aws-lambda-python": "1.110.0",
+    "@aws-cdk/aws-cloudformation": "1.110.0",
+    "@aws-cdk/custom-resources": "1.110.0",
+    "@aws-cdk/aws-dynamodb": "1.110.0",
     "@aws-cdk/aws-wafv2": "1.110.0",
     "@aws-cdk/core": "1.110.0",
     "@types/jest": "^26.0.23",

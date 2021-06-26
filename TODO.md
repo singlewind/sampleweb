@@ -1,7 +1,7 @@
 # TODO List
 
 ## CDK
-- [ ] DynamoDB
+- [x] DynamoDB
 - [ ] API Gateway
 - [ ] CloudFront
 - [x] WAF

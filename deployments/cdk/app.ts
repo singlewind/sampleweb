@@ -4,7 +4,7 @@ import * as cdk from '@aws-cdk/core'
 import { name, version, author } from '../../package.json'
 
 import { requiredEnv, fromEnv, ifEmtpy } from './lib/utils'
-import { WafStack } from './stacks'
+import { InfraStack, WafStack, ServiceStack } from './stacks'
 
 const environment = requiredEnv('ENVIRONMENT')
 
@@ -23,10 +23,33 @@ const commonParams = {
 
 const app = new cdk.App()
 
-new WafStack(app, `${environment}-${configFromEnv.application}-waf`, {
+const infraStack = new InfraStack(app, `${environment}-custom-resource`, {
+  ...commonParams,
+})
+
+const wafStack = new WafStack(app, `${environment}-${configFromEnv.application}-waf`, {
   env: {
     region: 'us-east-1',
   },
   ...commonParams,
   scope: 'CLOUDFRONT',
 })
+
+const serviceStack = new ServiceStack(app, `${environment}-${configFromEnv.application}-service`, {
+  ...commonParams,
+  crossImportFuncArnExportName: `${infraStack.stackName}:CrossImportFuncArn`,
+  waf: {
+    stackName: wafStack.stackName,
+    outputKey: 'WebAclID',
+    region: wafStack.region,
+  },
+  dynamoDB: {
+    readMaxRCU: 500,
+    writeMaxRCU: 1000,
+    readMinRCU: 1,
+    writeMinRCU: 1,
+  }
+})
+
+serviceStack.addDependency(wafStack, 'WafAcl need ready')
+serviceStack.addDependency(infraStack, 'Cross import function')

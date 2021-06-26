@@ -3,3 +3,6 @@ node_modules
 
 cdk.out
 .envrc
+
+.venv
+.vscode

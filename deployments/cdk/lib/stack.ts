@@ -1,6 +1,6 @@
 import { Stack, StackProps, Construct, Tags } from '@aws-cdk/core'
 
-export interface BaseStackProps extends StackProps {
+export interface IBaseStackProps extends StackProps {
   environment: string;
   application: string;
   version: string;
@@ -8,7 +8,7 @@ export interface BaseStackProps extends StackProps {
 }
 
 export class BaseStack extends Stack {
-  constructor (scope: Construct, id: string, props: BaseStackProps) {
+  constructor (scope: Construct, id: string, props: IBaseStackProps) {
     super(scope, id, props)
 
     Tags.of(this).add('Environment', props.environment)

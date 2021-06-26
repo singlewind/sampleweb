@@ -1,9 +1,9 @@
 import * as cdk from '@aws-cdk/core'
 import * as wafv2 from '@aws-cdk/aws-wafv2'
 
-import { BaseStack, BaseStackProps } from '../lib/stack'
+import { BaseStack, IBaseStackProps } from '../lib/stack'
 
-export interface WafStackProps extends BaseStackProps {
+export interface WafStackProps extends IBaseStackProps {
   scope: 'CLOUDFRONT' | 'REGIONAL'
 }
 
