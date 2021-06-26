@@ -7,8 +7,10 @@
   },
   "scripts": {
     "cdk:synth": "cdk synth",
+    "cdk:destroy": "cdk destroy",
     "lint": "eslint . --ext .ts",
-    "synth": "npm-run-all lint cdk:synth"
+    "synth": "npm-run-all lint cdk:synth",
+    "deploy": "cdk deploy" 
   },
   "repository": {
     "type": "git",
@@ -30,6 +32,7 @@
   "homepage": "https://github.com/singlewind/sampleweb#readme",
   "devDependencies": {
     "@aws-cdk/assert": "1.110.0",
+    "@aws-cdk/aws-wafv2": "1.110.0",
     "@aws-cdk/core": "1.110.0",
     "@types/jest": "^26.0.23",
     "@types/node": "^15.12.4",

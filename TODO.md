@@ -4,7 +4,7 @@
 - [ ] DynamoDB
 - [ ] API Gateway
 - [ ] CloudFront
-- [ ] WAF
+- [x] WAF
 - [ ] Lambda
 - [ ] Alarm
 - [ ] Dashboard
