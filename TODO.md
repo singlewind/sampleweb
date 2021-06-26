@@ -16,6 +16,6 @@
 - [ ] Error (GET)
 
 ## DEV ENV
-- [ ] Typescript Dev Environment
+- [x] Typescript Dev Environment
 - [x] Golang Dev Environment
 - [ ] DynamoDB Local

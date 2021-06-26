@@ -7,4 +7,5 @@
 ## Other Commands
 - `make build` run security and build binaries 
 - `make security` scan go source code for vulnerabilities
-- `make clean` delete all builds 
+- `make clean` delete all builds
+- `npm run lint` lint typescript code
