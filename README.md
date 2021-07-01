@@ -26,3 +26,5 @@ client ─────► cloudfront ─────► api gateway ────
 - [Golang Lambda](https://docs.aws.amazon.com/lambda/latest/dg/lambda-golang.html)
 - [CDK lambda-go](https://docs.aws.amazon.com/cdk/api/latest/typescript/api/aws-lambda-go.html)
 - [CDK WAF](https://github.com/cdk-patterns/serverless/blob/main/the-waf-apigateway/typescript/lib/api-gateway-stack.ts)
+- [CDK Solution Construct](https://docs.aws.amazon.com/solutions/latest/constructs/welcome.html)
+- [Cloudfront Cloudformation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudfront-distribution-distributionconfig.html#cfn-cloudfront-distribution-distributionconfig-webaclid)

@@ -18,14 +18,16 @@ export class Cloudfront extends cdk.Construct {
 
     const stack = cdk.Stack.of(this)
 
+    const bucketName = `${stack.stackName}-cloudfront-logging`
     const loggingBucket = new s3.Bucket(this, 'Bucket', {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       versioned: true,
       encryption: s3.BucketEncryption.S3_MANAGED,
       accessControl: s3.BucketAccessControl.LOG_DELIVERY_WRITE,
-      bucketName: `${stack.stackName}-cloudfront-logging`
     })
+
+    cdk.Tags.of(loggingBucket).add('Name', bucketName)
 
     const bucketPolicy = new s3.BucketPolicy(this, 'BucketPolicy', {
       bucket: loggingBucket,
